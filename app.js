@@ -35,22 +35,6 @@ async function preprocessImage(imageBuffer) {
     return preprocessedBuffer;
   }
 
-const getMid = (arr)=> {
-    sorted = arr.slice().sort(function(a, b) {
-        return a - b;
-      });
-    midpos = -1;
-    interval = -1;
-    for(let i = 0; i < sorted.length - 1; i++){
-        if(Math.abs(sorted[i] - sorted[i + 1]) > interval){
-            interval = Math.abs(sorted[i] - sorted[i + 1]);
-            midpos = sorted[i + 1];
-        }
-    }
-    return midpos;
-}
-
-
 
 app.get("/", (req, res) => {
     res.render('index');
@@ -58,7 +42,7 @@ app.get("/", (req, res) => {
 
 app.get("/show", async (req, res) => {
     let [min, count, change] = [-1, 0, false]
-
+    console.log(messages)
     const recieved = messages.map(m => {
         if (m["position"] === "received" && m["text"] != null) {
             change = false
@@ -128,20 +112,17 @@ app.post('/upload', upload.single('image'), async (req, res) => {
             const processedImage = await preprocessImage(imgBuffer) 
             const imageCenter = imageWidth / 2;
             await worker.recognize(processedImage, 'eng')
-                .then(({ data: { lines } }) => {
-                    const posX = lines.map(line => parseInt(line.bbox.x0));
-                    const midPos = getMid(posX);
-                    
+                .then(({ data: { lines } }) => {                    
 
                     messages = lines.map(line => {
                         const textCenter = (line.bbox.x0 + line.bbox.x1) / 2;
-                    
+                        console.log(line.text, line.bbox.x0, imageWidth - line.bbox.x1);
                         // Check if the text center is within a certain threshold of the image center
-                        const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.05); // 5% threshold
-                        let pos = isCentered? 'center': (line.bbox.x0 <= midPos ? 'received' : 'sent')
+                        const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.005); // 0.1% threshold
+                        const rightAlign = line.bbox.x0 > (imageWidth - line.bbox.x1); // 5% threshold
                         return {
                             text: line.text,
-                            position: pos
+                            position: rightAlign? 'sent': (isCentered ? 'center' : 'received')
                         };
                     });
                     res.redirect('./show')

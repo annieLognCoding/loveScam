@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import re, nltk
+# nltk.download()
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
+from nltk.probability import FreqDist
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
@@ -16,7 +18,6 @@ import pickle
 #importing dataset
 dataset = pd.read_csv("./archive/train.csv")
 
-print(dataset.size)
 corpus = []
 
 #cleaning text (without stemming / stopwords cleaning)
@@ -54,3 +55,25 @@ with open('vectorizer.pkl', 'wb') as f:
 
 with open('classifier.pkl', 'wb') as f:
     pickle.dump(classifier, f)
+
+plainWords, scamWords = [], []
+for i in range(dataset['sms'].size):
+    if(int(dataset['label'][i]) == 0):
+        plainWords.extend(dataset['sms'][i].split())
+    else:
+        scamWords.extend(dataset['sms'][i].split())
+
+fq1 = FreqDist(token.lower() for token in plainWords if token not in stopwords.words('english'))
+fq2 = FreqDist(token.lower() for token in scamWords if token not in stopwords.words('english'))
+
+# Convert FreqDist keys to sets
+set_fq1 = set(fq1.keys())
+set_fq2 = set(fq2.keys())
+
+# Find words in fq2 not in fq1
+unique_to_fq2 = set_fq2.difference(set_fq1)
+unique_to_fq2_sorted = sorted(unique_to_fq2, key=lambda x: fq2[x], reverse=True)
+unique_scam_words = list(unique_to_fq2_sorted)[:91]
+
+with open('unique_scam_words.pkl', 'wb') as f:
+    pickle.dump(unique_scam_words, f)
