@@ -21,9 +21,10 @@ upload.single('image') is a middleware provided by Multer that handles the file 
 */
 const upload = multer({ storage: storage });
 
+// GreyScale Image
 async function preprocessImage(imageBuffer) {
     const image = await Jimp.read(imageBuffer);
-    // Continue with the rest of your preprocessing steps...
+
     image
       .grayscale() // convert to grayscale
       .contrast(1) // increase the contrast
@@ -47,10 +48,9 @@ const getMid = (arr)=> {
         }
     }
     return midpos;
-
 }
 
-// Tesseract Worker
+
 
 app.get("/", (req, res) => {
     res.render('index');
@@ -115,7 +115,7 @@ app.get("/show", async (req, res) => {
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {
-    // Initialize the worker
+    // Tesseract Worker
     const worker = await createWorker('eng');
     await worker.setParameters({
         tessedit_pageseg_mode: 4
@@ -147,7 +147,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
                     res.redirect('./show')
                 })
                 .finally(async () => {
-                    await worker.terminate(); // Ensure worker is terminated after processing
+                    await worker.terminate(); 
                 });
 
             // Recognize text from image
