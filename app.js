@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const sharp = require('sharp');
 const { createWorker } = require('tesseract.js');
-
+const Jimp = require('jimp');
 const app = express();
 const port = 3000;
 var messages = {}
@@ -21,6 +21,35 @@ upload.single('image') is a middleware provided by Multer that handles the file 
 */
 const upload = multer({ storage: storage });
 
+async function preprocessImage(imageBuffer) {
+    const image = await Jimp.read(imageBuffer);
+    // Continue with the rest of your preprocessing steps...
+    image
+      .grayscale() // convert to grayscale
+      .contrast(1) // increase the contrast
+      .quality(100); // set JPEG quality
+    
+    // Return the preprocessed image buffer
+    const preprocessedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+    return preprocessedBuffer;
+  }
+
+const getMid = (arr)=> {
+    sorted = arr.slice().sort(function(a, b) {
+        return a - b;
+      });
+    midpos = -1;
+    interval = -1;
+    for(let i = 0; i < sorted.length - 1; i++){
+        if(Math.abs(sorted[i] - sorted[i + 1]) > interval){
+            interval = Math.abs(sorted[i] - sorted[i + 1]);
+            midpos = sorted[i + 1];
+        }
+    }
+    return midpos;
+
+}
+
 // Tesseract Worker
 
 app.get("/", (req, res) => {
@@ -28,15 +57,19 @@ app.get("/", (req, res) => {
 })
 
 app.get("/show", async (req, res) => {
-    let [count, change] = [0, false]
+    let [min, count, change] = [-1, 0, false]
 
     const recieved = messages.map(m => {
-        if (m["position"] === "recieved" && m["text"] != null) {
+        if (m["position"] === "received" && m["text"] != null) {
             change = false
+            if(min < 0){
+                min = count
+            }
             return {
                 text: m["text"],
                 pos: count
             }
+            
         } else if (!change) {
             count += 1;
             change = true
@@ -46,17 +79,20 @@ app.get("/show", async (req, res) => {
     })
     var text = ""
     recieved_text = []
-    count = 0
+    count = min;
     for (let r of recieved) {
-        if (r != "" && count < r["pos"]) {
-            recieved_text.push(text)
-            text = ""
-            count += 1
-        }
         if (r != "") {
             text += r["text"].trim() + " "
+            if(count < r["pos"]){
+                recieved_text.push(text)
+                text = ""
+                count += 1
+            }
         }
     }
+    if(text != "") recieved_text.push(text)
+
+    console.log(recieved_text)
 
     const predictions = await Promise.all(recieved_text.map(async text => {
         const response = await fetch('http://localhost:5001/predict', {
@@ -75,17 +111,7 @@ app.get("/show", async (req, res) => {
         };
     }));
 
-    let judge = ""
-    for (let pred of predictions) {
-        if (pred == 1) {
-            judge = "Scam!"
-            break;
-        } else {
-            judge = "Not Scam!"
-        }
-    }
-
-    res.send({ judge })
+    res.send({ predictions })
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {
@@ -99,15 +125,23 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
             const imgBuffer = req.file.buffer;
             const imageWidth = (await sharp(imgBuffer).metadata()).width
-
-            await worker.recognize(req.file.buffer, 'eng')
+            const processedImage = await preprocessImage(imgBuffer) 
+            const imageCenter = imageWidth / 2;
+            await worker.recognize(processedImage, 'eng')
                 .then(({ data: { lines } }) => {
-                    console.log(lines)
+                    const posX = lines.map(line => parseInt(line.bbox.x0));
+                    const midPos = getMid(posX);
+                    
+
                     messages = lines.map(line => {
-                        // console.log(`line X0: ${line.bbox.x0}, Image Width / 4: ${imageWidth / 4}`);
+                        const textCenter = (line.bbox.x0 + line.bbox.x1) / 2;
+                    
+                        // Check if the text center is within a certain threshold of the image center
+                        const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.05); // 5% threshold
+                        let pos = isCentered? 'center': (line.bbox.x0 <= midPos ? 'received' : 'sent')
                         return {
                             text: line.text,
-                            position: line.bbox.x0 > 170 ? 'sent' : 'received'
+                            position: pos
                         };
                     });
                     res.redirect('./show')

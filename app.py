@@ -24,7 +24,7 @@ def predict():
         message_vector = vectorizer.transform([message]).toarray()
         prediction = model.predict(message_vector)
         # Convert NumPy int64 to Python int
-        result = int(prediction[0])
+        result = (message, int(prediction[0]))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
