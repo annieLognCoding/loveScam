@@ -67,13 +67,17 @@ fq1 = FreqDist(token.lower() for token in plainWords if token not in stopwords.w
 fq2 = FreqDist(token.lower() for token in scamWords if token not in stopwords.words('english'))
 
 # Convert FreqDist keys to sets
-set_fq1 = set(fq1.keys())
+set_fq1 = set(fq1.most_common(len(fq1)//2))
 set_fq2 = set(fq2.keys())
 
+unique_to_fq2 = []
+for word in set_fq2:
+    if((fq2[word] - fq1[word]) > fq2[word] * 0.2):
+        unique_to_fq2.append(word)
+
 # Find words in fq2 not in fq1
-unique_to_fq2 = set_fq2.difference(set_fq1)
 unique_to_fq2_sorted = sorted(unique_to_fq2, key=lambda x: fq2[x], reverse=True)
-unique_scam_words = list(unique_to_fq2_sorted)[:91]
+unique_scam_words = list(unique_to_fq2_sorted)
 
 with open('unique_scam_words.pkl', 'wb') as f:
     pickle.dump(unique_scam_words, f)
