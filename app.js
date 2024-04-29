@@ -35,48 +35,127 @@ async function preprocessImage(imageBuffer) {
     return preprocessedBuffer;
   }
 
+function getDynamicThreshold(imageWidth, imageHeight) {
+    // Base scale factor; this might need tuning based on empirical data
+    const baseScaleFactor = 0.05; // 5% of the image width
+
+    // Adjusting the factor based on image height (the taller the image, the smaller the factor)
+    const heightAdjustment = Math.max(0.01, 1 - (imageHeight / 2000)); // Example adjustment logic
+
+    // Calculate dynamic threshold
+    const dynamicThreshold = baseScaleFactor * heightAdjustment * imageWidth;
+    return dynamicThreshold;
+}
+
+function getAlign(locs, imageWidth, imageCenter, imageHeight){
+    let textCenters = []
+    if(locs.length > 0){
+        for(let i = 1; i < locs.length; i++){
+            loc = locs[i]
+            prevLoc = locs[i - 1]
+            const {x0, x1, y0, y1, text} = loc;
+            const textCenter = (x1 - x0) / 2
+            textCenters.push(textCenter)
+        }
+    }
+    
+    const n = textCenters.length
+    const mean = textCenters.reduce((a, b) => a + b) / n
+    const std = Math.sqrt(textCenters.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    const threshold = getDynamicThreshold(imageWidth, imageHeight);
+    return std > threshold ? "Multiple Senders" : "Single Sender";
+    
+}
+
+function getVerticalThreshold(textHeight, imageHeight) {
+    // You could use a fixed percentage of the text height or a small percentage of the image height
+    return Math.max(textHeight * 0.3, imageHeight * 0.02); // 30% of text height or 2% of image height, whichever is larger
+}
+
+function analyzeTextBlocks(locs, imageHeight) {
+    let textBlocks = [];
+    let currentBlock = [];
+
+    for (let i = 0; i < locs.length; i++) {
+        const { x0, x1, y0, y1, text } = locs[i];
+        if (i > 0) {
+            const previous = locs[i - 1];
+            const previousY1 = previous.y1;
+            const verticalThreshold = getVerticalThreshold(previous.y1 - previous.y0, imageHeight);
+            // Check if current text is close enough to previous text vertically
+            if (y0 - previousY1 < verticalThreshold) {
+                // Current text is close enough to the previous, considered the same block
+                currentBlock.push({ x0, x1, y0, y1, text });
+            } else {
+                // Current text is not close enough, start a new block
+                if (currentBlock.length > 0) {
+                    textBlocks.push(currentBlock);
+                }
+                currentBlock = [{ x0, x1, y0, y1, text }];
+            }
+        } else {
+            // First text box, initialize the first block
+            currentBlock.push({ x0, x1, y0, y1, text });
+        }
+    }
+
+    // Push the last block if it exists
+    if (currentBlock.length > 0) {
+        textBlocks.push(currentBlock);
+    }
+
+    return textBlocks; // Returns an array of text blocks
+}
+function getMessageBlocks(textBlocks, figure, imageWidth){
+    if(figure == "Multiple Senders"){
+        const imageCenter = imageWidth / 2;
+        let messagesLocal = []
+        for(let textBlock of textBlocks){
+            console.log("TEXT BLOCK!!!!!!!!!!!")
+            let blockString = "";
+            const firstBlock = textBlock[0]
+            const { x0, x1, y0, y1, text } = firstBlock;
+            const textCenter = x0 + ((x1 - x0) / 2);
+            const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.03); // 0.3% threshold
+            const rightAlign = x0 > (imageWidth - x1);
+            for(let elem of textBlock){
+                blockString += elem.text.trim();
+            }
+            const pos = rightAlign ? 'sent': (isCentered ? 'center' : 'received')
+            messagesLocal.push({text: blockString, position: pos})
+            console.log(blockString, textCenter, imageCenter, pos)
+            console.log("\n\n\n")
+        }
+
+        return messagesLocal
+    
+    }else{
+        let messagesLocal = []
+        for(let textBlock of textBlocks){
+            let blockString = "";
+            for(let elem of textBlock){
+                blockString += elem.text.trim();
+            }
+            messagesLocal.push({text: blockString, position: 'received'})
+        }
+        
+        return messagesLocal
+    }
+}
+
+
 
 app.get("/", (req, res) => {
     res.render('index');
 })
 
 app.get("/show", async (req, res) => {
-    let [min, count, change] = [-1, 0, false]
-    console.log(messages)
-    const recieved = messages.map(m => {
-        if (m["position"] === "received" && m["text"] != null) {
-            change = false
-            if(min < 0){
-                min = count
-            }
-            return {
-                text: m["text"],
-                pos: count
-            }
-            
-        } else if (!change) {
-            count += 1;
-            change = true
-        }
-        return ""
-
-    })
-    var text = ""
-    recieved_text = []
-    count = min;
-    for (let r of recieved) {
-        if (r != "") {
-            text += r["text"].trim() + " "
-            if(count < r["pos"]){
-                recieved_text.push(text)
-                text = ""
-                count += 1
-            }
+    const recieved_text = []
+    for (let m of messages){
+        if(m["position"] === "received" && m["text"] != null){
+            recieved_text.push(m["text"])
         }
     }
-    if(text != "") recieved_text.push(text)
-
-    console.log(recieved_text)
 
     const predictions = await Promise.all(recieved_text.map(async text => {
         const response = await fetch('http://localhost:5001/predict', {
@@ -108,24 +187,26 @@ app.post('/upload', upload.single('image'), async (req, res) => {
         try {
 
             const imgBuffer = req.file.buffer;
-            const imageWidth = (await sharp(imgBuffer).metadata()).width
+            const metadata = await sharp(imgBuffer).metadata()
+            const imageWidth = metadata.width
+            const imageHeight = metadata.height
             const processedImage = await preprocessImage(imgBuffer) 
             const imageCenter = imageWidth / 2;
             await worker.recognize(processedImage, 'eng')
                 .then(({ data: { lines } }) => {                    
-
-                    messages = lines.map(line => {
-                        const textCenter = (line.bbox.x0 + line.bbox.x1) / 2;
-                        console.log(line.text, line.bbox.x0, imageWidth - line.bbox.x1);
-                        // Check if the text center is within a certain threshold of the image center
-                        const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.005); // 0.1% threshold
-                        const rightAlign = line.bbox.x0 > (imageWidth - line.bbox.x1); // 5% threshold
-                        return {
-                            text: line.text,
-                            position: rightAlign? 'sent': (isCentered ? 'center' : 'received')
-                        };
-                    });
-                    res.redirect('./show')
+                    locs = lines.map(line => {
+                        return{
+                            x0: line.bbox.x0,
+                            x1: line.bbox.x1,
+                            y0: line.bbox.y0,
+                            y1: line.bbox.y1,
+                            text: line.text
+                        }
+                    })
+                    const figure = getAlign(locs, imageWidth, imageCenter, imageHeight);
+                    const textBlocks = analyzeTextBlocks(locs, imageHeight);
+                    messages = getMessageBlocks(textBlocks, figure, imageWidth);
+                    res.redirect('./show');
                 })
                 .finally(async () => {
                     await worker.terminate(); 
