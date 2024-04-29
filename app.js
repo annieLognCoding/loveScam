@@ -6,7 +6,7 @@ const { createWorker } = require('tesseract.js');
 const Jimp = require('jimp');
 const app = express();
 const port = 3000;
-var messages = {}
+var messages = []
 
 app.set('view engine', 'ejs'); //when rendering html, express app will look for ejs files 
 app.set('views', path.join(__dirname, '/views'));
@@ -119,7 +119,7 @@ function getMessageBlocks(textBlocks, figure, imageWidth){
             const isCentered = Math.abs(textCenter - imageCenter) < (imageWidth * 0.03); // 0.3% threshold
             const rightAlign = x0 > (imageWidth - x1);
             for(let elem of textBlock){
-                blockString += elem.text.trim();
+                blockString += elem.text.trim() + " ";
             }
             const pos = rightAlign ? 'sent': (isCentered ? 'center' : 'received')
             messagesLocal.push({text: blockString, position: pos})
@@ -134,7 +134,7 @@ function getMessageBlocks(textBlocks, figure, imageWidth){
         for(let textBlock of textBlocks){
             let blockString = "";
             for(let elem of textBlock){
-                blockString += elem.text.trim();
+                blockString += elem.text.trim() + " ";
             }
             messagesLocal.push({text: blockString, position: 'received'})
         }
