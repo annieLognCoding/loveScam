@@ -1,0 +1,115 @@
+body {
+    background-color: #f4f4f4;
+}
+
+.result-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Default alignment to the start (left) */
+    width: 100%;
+}
+
+.message-box {
+    width: 85%;
+    padding: 10px;
+    margin-bottom: 5px;
+    /* Default border style */
+    box-sizing: border-box;
+}
+
+.text-center {
+    width: 75%;
+    align-self: center;
+    /* Reduce the font size for textareas in center-aligned boxes */
+}
+
+.text-center .message-text {
+    font-size: 65%;
+    text-align: center;
+    /* Reduce the font size for textareas in center-aligned boxes */
+    color: grey;
+    /* Set the text color to grey */
+}
+
+.text-left {
+    align-self: flex-start;
+    /* Aligns this box to the left */
+    border: 2px solid rgb(16, 15, 15);
+}
+
+.text-left .message-text {
+    font-size: 100%;
+    /* Standard font size */
+}
+
+.text-right {
+    align-self: flex-end;
+    /* Aligns this box to the right */
+    border: 2px solid rgb(0, 149, 255);
+}
+
+.text-right .message-text {
+    font-size: 100%;
+    /* Standard font size */
+}
+
+.message-text {
+    width: 100%;
+    height: auto;
+    min-height: 50px;
+    background-color: transparent;
+    border: none;
+    resize: none;
+    overflow: hidden;
+    /* Hide overflow */
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.upload-area:hover {
+    background-color: #f8f8f8;
+    cursor: pointer;
+}
+
+.result-area {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.local-storage-notification {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.notification-card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    padding: 20px;
+    display: inline-block;
+}
+
+.notification-action {
+    margin-top: 10px;
+}
+
+.custom-file-input {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.custom-file-label {
+    pointer-events: none;
+    /* Prevents clicking and selecting text */
+    user-select: none;
+    /* Prevent text selection */
+}

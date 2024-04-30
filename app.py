@@ -50,32 +50,41 @@ def predict():
         danger = []
         pred_link, pred = 0, 0
         json_data = request.get_json()
-        message = json_data['message']
-        message_clean = re.sub('[^a-zA-Z]', ' ', message)
-        message_clean = message_clean.lower().split()
-        print("what?")
-        if(len(message_clean) >= 3):
-            message_clean = " ".join(message_clean)
-            message_vector = vectorizer.transform([message_clean]).toarray()
-            prediction = model.predict(message_vector)
-            # Convert NumPy int64 to Python int
-            if(int(prediction[0]) == 1):
-                for m in message.split():
-                    if m in unique_scam_words:
-                        danger.append(m)
-            pred = int(prediction[0])
-            suspicious_links = find_suspicious_links(message)
-            if(len(suspicious_links) > 0):
-                pred_link = 1
-                danger.extend(suspicious_links)
-        result = (message, pred, pred_link, danger)
+        messages = json_data['messages']
+        received = []
+        sent = []
+        result = {}
+        for m in messages:
+            align = m["type"]
+            text = m["text"]
+            if(align == "L"):
+                received.append(text)
+            elif(align == "R"):
+                sent.append(text)        
+
+        for message in received:
+            message_clean = re.sub('[^a-zA-Z]', ' ', message)
+            message_clean = message_clean.lower().split()
+            if(len(message_clean) >= 3):
+                message_clean = " ".join(message_clean)
+                message_vector = vectorizer.transform([message_clean]).toarray()
+                prediction = model.predict(message_vector)
+                # Convert NumPy int64 to Python int
+                if(int(prediction[0]) == 1):
+                    for m in message.split():
+                        if m in unique_scam_words:
+                            danger.append(m)
+                pred = int(prediction[0])
+                suspicious_links = find_suspicious_links(message)
+                if(len(suspicious_links) > 0):
+                    pred_link = 1
+                    danger.extend(suspicious_links)
+            result[message] = (pred, pred_link)
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(result)
-
-
+    return jsonify({"result": result, "danger": danger})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
