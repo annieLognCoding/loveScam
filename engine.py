@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 # Import datasets
 dataset = pd.read_csv("./archive/train.csv")
-dataset2 = pd.read_csv("./archive/Datset_5971.csv")
+dataset2 = pd.read_csv("./archive/Dataset_5971.csv")
 
 corpus = []
 
