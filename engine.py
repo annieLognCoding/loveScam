@@ -15,25 +15,47 @@ import pickle
 
 # Assume cv is your CountVectorizer that has been fitted to the corpus
 
-#importing dataset
+import pandas as pd
+import re
+from sklearn.feature_extraction.text import CountVectorizer
+
+# Import datasets
 dataset = pd.read_csv("./archive/train.csv")
+dataset2 = pd.read_csv("./archive/Datset_5971.csv")
 
 corpus = []
 
-#cleaning text (without stemming / stopwords cleaning)
+# Process the first dataset
 for i in range(dataset['sms'].size):
-    # replace everything that is not a letter
-    message = re.sub('[^a-zA-Z]', ' ', dataset['sms'][i])    
-    # capital to lowercase
-    message = message.lower()
-    message = message.split()
+    # Replace everything that is not a letter
+    message = re.sub('[^a-zA-Z]', ' ', dataset['sms'][i])
+    # Convert to lowercase and split into words
+    message = message.lower().split()
+    # Rejoin words to form the cleaned message
     message = " ".join(message)
     corpus.append(message)
 
-#create a bag of words with the spam corpus
+# Process the second dataset
+for i in range(dataset2['TEXT'].size):
+    # Replace everything that is not a letter
+    message = re.sub('[^a-zA-Z]', ' ', dataset2['TEXT'][i])
+    # Convert to lowercase and split into words
+    message = message.lower().split()
+    # Rejoin words to form the cleaned message
+    message = " ".join(message)
+    corpus.append(message)
+
+# Create a Bag of Words model
 cv = CountVectorizer(max_features=4000)
 X = cv.fit_transform(corpus).toarray()
-y = dataset.iloc[:, -1].values
+
+# Prepare labels from both datasets
+y = dataset['label'].tolist()  # Assuming this column contains binary labels
+y.extend([0 if label == 'ham' else 1 for label in dataset2['LABEL']])  # Extend with labels from dataset2
+
+# Convert labels list to an array if necessary
+y = np.array(y)
+        
 
 # split training set and test set
 
@@ -63,8 +85,10 @@ for i in range(dataset['sms'].size):
     else:
         scamWords.extend(dataset['sms'][i].split())
 
-fq1 = FreqDist(token.lower() for token in plainWords if token not in stopwords.words('english'))
-fq2 = FreqDist(token.lower() for token in scamWords if token not in stopwords.words('english'))
+stop_words = set(stopwords.words('english'))
+
+fq1 = FreqDist(token.lower() for token in plainWords if token.lower() not in stop_words)
+fq2 = FreqDist(token.lower() for token in scamWords if token.lower() not in stop_words)
 
 # Convert FreqDist keys to sets
 set_fq1 = set(fq1.most_common(len(fq1)//2))

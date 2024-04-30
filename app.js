@@ -284,7 +284,6 @@ app.post('/get-prediction', async (req, res) => {
 app.get("/result", (req, res) => {
     data = req.session.data.data;
     const { danger, result } = data
-    console.log(danger, result)
     res.render('result', { danger, result });
 })
 

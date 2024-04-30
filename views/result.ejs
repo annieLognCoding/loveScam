@@ -4,16 +4,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Result Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .scam {
+            color: red;
+        }
+
+        .danger-words {
+            color: red;
+        }
+
+        .safe {
+            color: green;
+        }
+    </style>
+    <title>Results Page</title>
 </head>
 
 <body>
-    <%=danger%>
-        <%for(let message in result){%>
-            <li>
-                <%=message%>
-            </li>
-            <%}%>
+    <div class="container mt-5">
+        <h1>Message Analysis Results</h1>
+        <% if (result[1]===1) { %>
+            <span class="scam">Something smells phischy!</span>
+            <%} if (result[2]===1){%>
+                <span class="scam">Scammy Link!</span>
+                <%} if (result[3]===1){%>
+                    <span class="scam">Private Info</span>
+                    <%} if(result[4]===1){%>
+                        <span class="scam">Urgency</span>
+                        <%} if (result[1]===0 && result[2]===0 && result[3]===0 && result[4]===0){%>
+                            <span class="safe">Safe</span>
+                            <%}else{%>
+                                <div class="mt-4">
+                                    <h2>Danger Words:</h2>
+                                    <% for (let word of danger) { %>
+                                        <p class="danger-words">
+                                            <%= word %>
+                                        </p>
+                                        <% } %>
+
+                                </div>
+                                <%}%>
+    </div>
 </body>
 
 </html>

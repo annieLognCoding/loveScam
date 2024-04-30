@@ -40,6 +40,7 @@ body {
 
 .text-left .message-text {
     font-size: 100%;
+    text-align: left;
     /* Standard font size */
 }
 
@@ -51,6 +52,7 @@ body {
 
 .text-right .message-text {
     font-size: 100%;
+    text-align: left;
     /* Standard font size */
 }
 
