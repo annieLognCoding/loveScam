@@ -3,11 +3,35 @@ import pickle, re
 import numpy as np
 from flask_cors import CORS
 import traceback
+import nltk
 
 import re
 
 from textblob import TextBlob
 import re, math
+from nltk.corpus import words
+
+nltk.download('words')
+
+def refine_model_prediction(text, pred, danger):
+    # Calculate sentiment
+    sentiment = TextBlob(text).sentiment
+    # Define a range for neutral sentiment
+    NEUTRAL_LOWER_BOUND = -0.1
+    NEUTRAL_UPPER_BOUND = 0.1    
+    EXTREME_LOWER_BOUND = -0.7
+    EXTREME_UPPER_BOUND = 0.7    
+    # Check if the sentiment is within the neutral range
+    if pred == 1 and NEUTRAL_LOWER_BOUND < sentiment.polarity < NEUTRAL_UPPER_BOUND:
+        return ''
+
+    if pred == 1 and len(text) <= 5 and set(text.split()).isdisjoint(set(danger)):
+        return ''  
+    
+    if sentiment.polarity > EXTREME_UPPER_BOUND or sentiment.polarity < EXTREME_LOWER_BOUND or not set(text.split()).isdisjoint(set(danger)):
+        return text
+
+    return text if pred else ''
 
 def evaluate_urgency(text):
     # Analyze sentiment
@@ -15,8 +39,11 @@ def evaluate_urgency(text):
     sentiment = blob.sentiment
 
     # Define urgency keywords
-    urgency_keywords = ['urgent', 'immediately', 'as soon as possible', 'asap', 'quick', 'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry']
-    keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b'
+    urgency_keywords = ['urgent', 'immediately', 'as soon as possible', 'asap', 'quick', \
+                        'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
+                        'stole', 'lost', 'money', 'broke', 'right', 'just'
+                        ]
+    keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b' + '|' + r'\bdelete\b.*?\bnumber\b'
 
     # Check for urgency keywords
     keywords_found = re.findall(keyword_pattern, text, re.IGNORECASE)
@@ -33,15 +60,15 @@ def evaluate_urgency(text):
         for word in urgency_keywords:
             if word in keywords_found:
                 sus.append(word)
-        return [1, sus]
-    return [0, sus]
+        return sus
+    return sus
 
 def find_suspicious_links(text):
     # List of commonly safe TLDs, consider expanding this list as needed
     safe_tlds = ['.org', '.com', '.net', '.edu', '.gov', '.uk', '.de', '.jp', '.fr', '.au', '.us', '.ca', '.ch', '.it', '.nl', '.se', '.no', '.es', '.mil']
     
     # More specific Regex to find URLs with or without http(s)
-    url_pattern = r'\b(?:https?://)?(?:www\.)?[a-zA-Z0-9-]{1,63}(?:\.[a-zA-Z0-9-]{1,63})+\b'
+    url_pattern = r'\b(?:https?://)?(?:www\.)?[a-zA-Z0-9-]{1,63}(?:\.[a-zA-Z0-9-]{1,63})+\s*(?:/\s*[^\s]*)?\b'
     
     # List of additional suspicious patterns in URLs
     suspicious_patterns = [
@@ -52,13 +79,19 @@ def find_suspicious_links(text):
     
     # Find all URLs in the given text
     urls = re.findall(url_pattern, text)
+    english_words_set = set(words.words())    
     
     # Filter URLs that are suspicious either by pattern or by TLD
     suspicious_urls = []
     for url in urls:
-        domain_part = url.split('/')[0]  # Focus on the domain part for TLD checking
+        url_parts = url.split('/')
+        domain_part = url_parts[0]
+        if(len(url_parts) >= 2 and 'http' in url_parts[0]):
+            domain_part = url_parts[1]
+        # Focus on the domain part for TLD checking
         if any(re.search(pattern, url) for pattern in suspicious_patterns) or \
-           not any(domain_part.endswith(tld) for tld in safe_tlds):
+           not any(domain_part.endswith(tld) for tld in safe_tlds) \
+                and False in [word.strip().lower() in english_words_set for word in url.split(".")]:
             suspicious_urls.append(url)
     
     return suspicious_urls
@@ -66,14 +99,14 @@ def find_suspicious_links(text):
 def is_asking_for_private_info(text):
     sus = []
     # Possessive pronouns that might indicate a request for private information
-    possessives = ["your", "his", "her", "my", "ur"]
+    possessives = ["your", "ur"]
     
     # Data terms associated with private information
     private_data_terms = [
-        "name", "phone", "number", "email", "address",
+        "name", "number", "email", "address",
         "social security number", "ssn", "credit card", 
         "bank account", "instagram", "insta", "kakao talk", 
-        "katalk", "kakaotalk", "snapchat"
+        "katalk", "kakaotalk", "snapchat", "account", "password", "pw"
     ]
 
     # Generate patterns dynamically
@@ -103,7 +136,7 @@ with open('unique_scam_words.pkl', 'rb') as f:
 def predict():
     try:
         danger = []
-        pred_model, pred_link, pred_info, pred_urgent = 0, 0, 0, 0
+        pred_model = 0
         json_data = request.get_json()
         messages = json_data['messages']
         received = []
@@ -118,6 +151,8 @@ def predict():
                 sent.append(text)        
 
         received_text = ""
+        message_pred = []
+        score = 0
         for message in received:
             received_text += message + " "
             message_clean = re.sub('[^a-zA-Z]', ' ', message)
@@ -125,28 +160,43 @@ def predict():
             message_clean = " ".join(message_clean)
             message_vector = vectorizer.transform([message_clean]).toarray()
             prediction = model.predict(message_vector)
-            print(message, prediction[0])
-            if(int(prediction[0]) == 1):
+            message_pred.append([message, prediction[0]])
+            if(int(prediction[0]) == 1 and len(message.split()) >= 3):
                 pred_model = 1
                 for m in message.split():
                     if m in unique_scam_words:
                         danger.append(m)
         
+        print(message_pred)
+        print(danger)
+        if(pred_model):
+            danger_texts = [refine_model_prediction(message_point[0], message_point[1], danger) for message_point in message_pred]
+            score += sum([len(text) for text in danger_texts]) * 1.5 
+            print(danger_texts)
+
         suspicious_links = find_suspicious_links(received_text)
         if(len(suspicious_links) > 0):
-            pred_link = 1
+            score += (sum([len(link) for link in suspicious_links]) / 15) * 0.1 * len(received_text)
+            if(pred_model): score += 0.7 * len(received_text)
             danger.extend(suspicious_links)
         
         private_info = is_asking_for_private_info(received_text)
         if(len(private_info) > 0):
-            pred_info = 1
+            score += (sum([len(info_word) for info_word in private_info]) / 5) * 0.1 * len(received_text)
+            if(pred_model): score += 0.7 * len(received_text)
             danger.extend(private_info)
             
-        [pred_urgent, urgency_words] = evaluate_urgency(received_text)
-        if(pred_urgent):
+        urgency_words = evaluate_urgency(received_text)
+        if(len(urgency_words) > 0):
+            score += (sum([len(urgency_word) for urgency_word in urgency_words]) / 5) * (len(received_text) * 0.1)
+            if(pred_model): score += 0.7 * len(received_text)
             danger.extend(urgency_words)
             
-        result = (received_text, pred_model, pred_link, pred_info, pred_urgent)
+        score = score / len(received_text)
+        if(score > 0.3 and not pred_model): score += 0.25
+        if(score >= 1): score = 0.98
+             
+        result = (received_text, score, 1 - score)
     except Exception as e:
         traceback.print_exc()
         stack_trace = traceback.format_exc()

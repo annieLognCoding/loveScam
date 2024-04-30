@@ -85,7 +85,7 @@ function getAlign(locs, imageWidth, imageCenter, imageHeight) {
 
 function getVerticalThreshold(textHeight, imageHeight) {
     // You could use a fixed percentage of the text height or a small percentage of the image height
-    return Math.max(textHeight * 0.3, imageHeight * 0.02); // 30% of text height or 2% of image height, whichever is larger
+    return Math.max(textHeight * 0.5, imageHeight * 0.02); // 30% of text height or 2% of image height, whichever is larger
 }
 
 function analyzeTextBlocks(locs, imageHeight) {

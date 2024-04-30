@@ -36,14 +36,14 @@ for i in range(dataset['sms'].size):
     corpus.append(message)
 
 # Process the second dataset
-for i in range(dataset2['TEXT'].size):
-    # Replace everything that is not a letter
-    message = re.sub('[^a-zA-Z]', ' ', dataset2['TEXT'][i])
-    # Convert to lowercase and split into words
-    message = message.lower().split()
-    # Rejoin words to form the cleaned message
-    message = " ".join(message)
-    corpus.append(message)
+# for i in range(dataset2['TEXT'].size):
+#     # Replace everything that is not a letter
+#     message = re.sub('[^a-zA-Z]', ' ', dataset2['TEXT'][i])
+#     # Convert to lowercase and split into words
+#     message = dataset2['TEXT'][i].lower().split()
+#     # Rejoin words to form the cleaned message
+#     message = " ".join(message)
+#     corpus.append(message)
 
 # Create a Bag of Words model
 cv = CountVectorizer(max_features=4000)
@@ -51,7 +51,7 @@ X = cv.fit_transform(corpus).toarray()
 
 # Prepare labels from both datasets
 y = dataset['label'].tolist()  # Assuming this column contains binary labels
-y.extend([0 if label == 'ham' else 1 for label in dataset2['LABEL']])  # Extend with labels from dataset2
+# y.extend([0 if label == 'ham' else 1 for label in dataset2['LABEL']])  # Extend with labels from dataset2
 
 # Convert labels list to an array if necessary
 y = np.array(y)

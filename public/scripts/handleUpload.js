@@ -50,6 +50,35 @@ document.querySelectorAll('.confirm-button').forEach(button => {
     });
 });
 
+function noChange() {
+    document.querySelectorAll('.message-box').forEach(box => {
+        // Get the type from the class list of the message box
+        let type = Array.from(box.classList).find(cls => ['R', 'L', 'C'].includes(cls));
+        if (type == undefined) {
+            const align = Array.from(box.classList).find(cls => ['text-center', 'text-left', 'text-right'].includes(cls));
+            const textarea = box.querySelector('.message-text');
+            if (align === 'text-center') {
+                type = 'C';
+                box.style.display = 'none';
+            }
+            else if (align === 'text-left') {
+                type = 'L';
+                box.style.backgroundColor = 'rgb(16, 15, 15)';
+                textarea.style.backgroundColor = 'rgb(16, 15, 15)';
+                textarea.style.color = "white";
+            }
+            if (align === 'text-right') {
+                type = 'R';
+                box.style.backgroundColor = 'rgb(0, 149, 255)';
+                textarea.style.backgroundColor = 'rgb(0, 149, 255)';
+                textarea.style.color = "white";
+            }
+            box.classList.add(type);
+
+        }
+        // Push the message object to the messages array
+    });
+}
 
 function submitChange() {
     const messages = [];
@@ -145,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     break;
                 case 'L':  // Received button pressed, turn the box black
                     textarea.style.display = 'block';  // Ensure it's visible if previously hidden
+                    messageBox.classList.remove('text-left', 'text-right', 'text-center');
                     messageBox.classList.add('text-left');
                     messageBox.style.backgroundColor = 'rgb(16, 15, 15)';
                     adjustHeight(textarea);
@@ -153,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     break;
                 case 'R':  // Sent button pressed, turn the box blue
                     textarea.style.display = 'block';  // Ensure it's visible if previously hidden
+                    messageBox.classList.remove('text-left', 'text-right', 'text-center');
                     messageBox.classList.add('text-right');
                     messageBox.style.backgroundColor = 'rgb(0, 149, 255)';
                     adjustHeight(textarea);
