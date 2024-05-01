@@ -167,9 +167,7 @@ def predict():
                     if m in unique_scam_words:
                         danger.append(m)
         
-        print(message_pred)
-        print(danger)
-        if(pred_model):
+        if(pred_model and len(danger) > 0):
             danger_texts = [refine_model_prediction(message_point[0], message_point[1], danger) for message_point in message_pred]
             score += sum([len(text) for text in danger_texts]) * 1.5 
             print(danger_texts)
