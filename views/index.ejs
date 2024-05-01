@@ -17,21 +17,8 @@
         <!-- Upload Area -->
         <div class="row">
             <div class="col">
-                <div class="upload-area" id="uploadArea">
-                    <h4 class="mb-3">Upload your image</h4>
-                    <form action="/upload" method="post" enctype="multipart/form-data">
-                        <div class="custom-file mb-3">
-                            <input type="file" class="custom-file-input" id="customFile" name="image" required>
-                            <label class="custom-file-label" for="customFile">Choose file</label>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block" onclick="uploadFile()">Upload and Detect
-                            Text</button>
-                    </form>
-                </div>
-            </div>
-            <div class="col">
                 <div class="result-area" id="resultArea">
-                    <h4>Result</h4>
+                    <h4>Edit Text</h4>
                     <% if (data && data.show_text) { %>
                         <% data.show_text.forEach(function(text, index) { %>
                             <div class="message-box <%= text[0] === 'C' ? 'text-center' : text[0] === 'L' ? 'text-left black-bg' : 'text-right blue-bg' %>"
@@ -53,9 +40,39 @@
                                 </div>
 
                                 <% } else { %>
-                                    <p>No results to display</p>
+                                    <div class="upload-area" id="uploadArea">
+                                        <h4 class="mb-3">Upload your image</h4>
+                                        <form action="/upload" method="post" enctype="multipart/form-data">
+                                            <div class="custom-file mb-3">
+                                                <input type="file" class="custom-file-input" id="customFile"
+                                                    name="image" required>
+                                                <label class="custom-file-label" for="customFile">Choose file</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-block"
+                                                onclick="uploadFile()">Upload and Detect
+                                                Text</button>
+                                        </form>
+                                    </div>
                                     <% } %>
                 </div>
+
+            </div>
+            <div class="col">
+                <h1>Message Analysis Results</h1>
+                <% if(result && result[1]> 0.5){ %>
+                    <p class="scam">Scam Probability: <%= (result[1] * 100).toFixed(2) %> %</p>
+                    <div class="mt-4">
+                        <h2>Danger Words:</h2>
+                        <% for (let word of danger) { %>
+                            <p class="danger-words">
+                                <%= word %>
+                            </p>
+                            <% } %>
+                    </div>
+                    <%}else if (result){%>
+                        <h2>Likely not a scam!</h2>
+                        <p class="safe">Scam Probaility: <%= (result[1] * 100).toFixed(2) %> %</p>
+                        <%}%>
             </div>
         </div>
 

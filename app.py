@@ -10,8 +10,25 @@ import re
 from textblob import TextBlob
 import re, math
 from nltk.corpus import words
+from nltk.corpus import wordnet as wn
 
+# Ensure NLTK resources are available
+nltk.download('wordnet')
 nltk.download('words')
+
+# Load the model and vectorizer
+with open('classifier.pkl', 'rb') as f:
+    model = pickle.load(f)
+
+with open('vectorizer.pkl', 'rb') as f:
+    vectorizer = pickle.load(f)
+
+with open('unique_scam_words.pkl', 'rb') as f:
+    unique_scam_words = pickle.load(f)
+    
+with open('irregular_verbs.pkl', 'rb') as f:
+    irregular_verbs = pickle.load(f)
+
 
 def refine_model_prediction(text, pred, danger):
     # Calculate sentiment
@@ -37,19 +54,35 @@ def evaluate_urgency(text):
     # Analyze sentiment
     blob = TextBlob(text)
     sentiment = blob.sentiment
+    # Retrieve all verb lemmas and their forms
+    # Return the first past tense form found
+    # Filter for unique irregular past tense forms
+    negative_irregular_verbs = set()
+    for verb in list(irregular_verbs):
+        blob_verb = TextBlob(verb)
+        sentiment_verb = blob_verb.sentiment
+        if sentiment.polarity < -0.5:
+            negative_irregular_verbs.update(sentiment_verb)
+    # Format for regex usage
+    irregular_past_tense_regex = '|'.join(map(re.escape, set(negative_irregular_verbs)))  # Escape special characters
 
+    # Final regex
     # Define urgency keywords
     urgency_keywords = ['urgent', 'immediately', 'as soon as possible', 'asap', 'quick', \
                         'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
-                        'stole', 'lost', 'money', 'broke', 'right', 'just'
-                        ]
-    keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b' + '|' + r'\bdelete\b.*?\bnumber\b'
+                        'stole', 'lost', 'money', 'broke', 'right away']
+    keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b'
+    delete_number = r'\bdelete\b.*?\bnumber\b'
+    just_finished = f"\\bjust\\b(\\s+\\w+)?(\\s+\\w+)?\\s+(\\w+)((ed|en)|({irregular_past_tense_regex}))?\\b"
 
+    
     # Check for urgency keywords
     keywords_found = re.findall(keyword_pattern, text, re.IGNORECASE)
+    delete_found = re.findall(delete_number, text, re.IGNORECASE)
+    just_found = re.findall(just_finished, text, re.IGNORECASE)
 
     # Scoring based on sentiment and keywords
-    score = len(keywords_found) * 10  # Assign 10 points per keyword
+    score = (len(keywords_found) + len(delete_found) + len(just_found))* 10  # Assign 10 points per keyword
     if sentiment.polarity < -0.3:  # Negative sentiment
         score += 5
     if sentiment.subjectivity > 0.5:  # High subjectivity can sometimes indicate personal urgency
@@ -60,6 +93,10 @@ def evaluate_urgency(text):
         for word in urgency_keywords:
             if word in keywords_found:
                 sus.append(word)
+        if len(just_found) > 0:
+            sus.append("just (urgent)")
+        if len(delete_found) > 0:
+            sus.append("delete number")
         return sus
     return sus
 
@@ -122,15 +159,7 @@ def is_asking_for_private_info(text):
 app = Flask(__name__)
 CORS(app)
 
-# Load the model and vectorizer
-with open('classifier.pkl', 'rb') as f:
-    model = pickle.load(f)
 
-with open('vectorizer.pkl', 'rb') as f:
-    vectorizer = pickle.load(f)
-
-with open('unique_scam_words.pkl', 'rb') as f:
-    unique_scam_words = pickle.load(f)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -166,7 +195,7 @@ def predict():
                 for m in message.split():
                     if m in unique_scam_words:
                         danger.append(m)
-        
+        print(message_pred)        
         if(pred_model and len(danger) > 0):
             danger_texts = [refine_model_prediction(message_point[0], message_point[1], danger) for message_point in message_pred]
             score += sum([len(text) for text in danger_texts]) * 1.5 
@@ -183,15 +212,16 @@ def predict():
             score += (sum([len(info_word) for info_word in private_info]) / 5) * 0.1 * len(received_text)
             if(pred_model): score += 0.7 * len(received_text)
             danger.extend(private_info)
-            
+        print(score)
         urgency_words = evaluate_urgency(received_text)
         if(len(urgency_words) > 0):
             score += (sum([len(urgency_word) for urgency_word in urgency_words]) / 5) * (len(received_text) * 0.1)
+            print(sum([len(urgency_word) for urgency_word in urgency_words]), len(received_text))
             if(pred_model): score += 0.7 * len(received_text)
+            print(score/ len(received_text))
             danger.extend(urgency_words)
             
         score = score / len(received_text)
-        if(score > 0.3 and not pred_model): score += 0.25
         if(score >= 1): score = 0.98
              
         result = (received_text, score, 1 - score)

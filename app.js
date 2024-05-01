@@ -162,9 +162,9 @@ app.get("/", (req, res) => {
     if (req.session.data) {
         const data = req.session.data;
         delete req.session.data;  // Delete the data right after using it
-        res.render('index', { data }); // Pass the data to the template
+        res.render('index', { data, danger: null, result: null }); // Pass the data to the template
     } else {
-        res.render('index', { data: null }); // Render without data if session data doesn't exist
+        res.render('index', { data: null, danger: null, result: null }); // Render without data if session data doesn't exist
     }
 });
 
@@ -284,7 +284,7 @@ app.post('/get-prediction', async (req, res) => {
 app.get("/result", (req, res) => {
     data = req.session.data.data;
     const { danger, result } = data
-    res.render('result', { danger, result });
+    res.render('index', { danger, result, data: null });
 })
 
 app.listen(port, () => {

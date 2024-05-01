@@ -2,6 +2,18 @@ body {
     background-color: #f4f4f4;
 }
 
+.scam {
+    color: red;
+}
+
+.danger-words {
+    color: red;
+}
+
+.safe {
+    color: green;
+}
+
 .result-area {
     display: flex;
     flex-direction: column;
@@ -85,6 +97,8 @@ body {
     border-radius: 5px;
     padding: 20px;
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
 }
 
 .local-storage-notification {
