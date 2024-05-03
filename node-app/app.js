@@ -7,8 +7,7 @@ const Jimp = require('jimp');
 const app = express();
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const apiUrl = process.env.API_URL;
-// Body parsing middleware
+const baseUrl = process.env.NODE_ENV === 'production' ? process.env.API_URL : 'http://localhost:5001';// Body parsing middleware
 
 let messages = []
 
