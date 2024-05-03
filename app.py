@@ -71,10 +71,13 @@ def evaluate_urgency(text):
     urgency_keywords = ['urgent', 'immediately', 'as soon as possible', 'asap', 'quick', \
                         'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
                         'stole', 'lost', 'money', 'broke', 'right away']
+                        'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
+                        'stole', 'lost', 'money', 'broke', 'right away']
     keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b'
     delete_number = r'\bdelete\b.*?\bnumber\b'
     just_finished = f"\\bjust\\b(\\s+\\w+)?(\\s+\\w+)?\\s+(\\w+)((ed|en)|({irregular_past_tense_regex}))?\\b"
 
+    
     
     # Check for urgency keywords
     keywords_found = re.findall(keyword_pattern, text, re.IGNORECASE)
@@ -217,10 +220,12 @@ def predict():
             if(pred_model): score += 0.7 * len(received_text)
             danger.extend(private_info)
         print(score)
+        print(score)
         urgency_words = evaluate_urgency(received_text)
         if(len(urgency_words) > 0):
             score += (sum([len(urgency_word) for urgency_word in urgency_words]) // 5 + 1) * (len(received_text) * 0.1)
             if(pred_model): score += 0.7 * len(received_text)
+            print(score/ len(received_text))
             print(score/ len(received_text))
             danger.extend(urgency_words)
         
