@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload for OCR</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/app.css">
+    <script src="scripts/chooseFile.js" defer></script>
+    <script src="scripts/handleUpload.js" defer></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <!-- Upload Area -->
+        <div class="row">
+            <div class="col">
+                <div class="result-area" id="resultArea">
+                    <h4>Edit Text</h4>
+                    <% if (data && data.show_text) { %>
+                        <% data.show_text.forEach(function(text, index) { %>
+                            <div class="message-box <%= text[0] === 'C' ? 'text-center' : text[0] === 'L' ? 'text-left black-bg' : 'text-right blue-bg' %>"
+                                data-index="<%= index %>">
+                                <textarea class="form-control message-text"><%= text[1] %></textarea>
+                                <button class="btn btn-secondary btn-sm confirm-button d-inline"
+                                    data-type="R">Sent</button>
+                                <button class="btn btn-secondary btn-sm confirm-button d-inline"
+                                    data-type="L">Received</button>
+                                <button class="btn btn-danger btn-sm confirm-button d-inline" data-type="C">X</button>
+                            </div>
+                            <% }); %>
+
+                                <div style="display: flex; flex-direction: row;">
+                                    <button class="btn btn-danger mr-2" id="noChanges" onclick="noChange()">No
+                                        Changes</button>
+                                    <button class="btn btn-primary" id="submitChanges" onclick="submitChange()">Submit
+                                        Changes</button>
+                                </div>
+
+                                <% } else { %>
+                                    <div class="upload-area" id="uploadArea">
+                                        <h4 class="mb-3">Upload your image</h4>
+                                        <form action="/upload" method="post" enctype="multipart/form-data">
+                                            <div class="custom-file mb-3">
+                                                <input type="file" class="custom-file-input" id="customFile"
+                                                    name="image" required>
+                                                <label class="custom-file-label" for="customFile">Choose file</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-block"
+                                                onclick="uploadFile()">Upload and Detect
+                                                Text</button>
+                                        </form>
+                                    </div>
+                                    <% } %>
+                </div>
+
+            </div>
+            <div class="col">
+                <div id="realResult">
+                    <!-- <h1>Result</h1>
+                    <div id="progressContainer" style="width: 100%; background-color: #ddd;">
+                        <div id="progressBar" style="width: 0%; height: 30px; background-color: #4CAF50;"></div>
+                      </div> -->
+                      <h2>Scam Analysis</h2>
+                      <canvas id="myChart"></canvas>
+                  </div>
+            </div>
+        </div>
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>
