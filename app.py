@@ -71,8 +71,6 @@ def evaluate_urgency(text):
     urgency_keywords = ['urgent', 'immediately', 'as soon as possible', 'asap', 'quick', \
                         'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
                         'stole', 'lost', 'money', 'broke', 'right away']
-                        'emergency', 'critical', 'now', 'need', 'quickly', 'fast', 'hurry'\
-                        'stole', 'lost', 'money', 'broke', 'right away']
     keyword_pattern = r'\b(?:' + '|'.join(urgency_keywords) + r')\b'
     delete_number = r'\bdelete\b.*?\bnumber\b'
     just_finished = f"\\bjust\\b(\\s+\\w+)?(\\s+\\w+)?\\s+(\\w+)((ed|en)|({irregular_past_tense_regex}))?\\b"
