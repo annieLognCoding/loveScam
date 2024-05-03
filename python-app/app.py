@@ -13,10 +13,6 @@ import re, math
 from nltk.corpus import words
 from nltk.corpus import wordnet as wn
 
-# Ensure NLTK resources are available
-nltk.download('wordnet')
-nltk.download('words')
-
 # Get the absolute path to the directory of this script
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
