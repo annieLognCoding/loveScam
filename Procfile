@@ -1,2 +1,2 @@
-web: node node-app/app.js
-worker: gunicorn python-app:app
+web: gunicorn python-app:app
+node: node node-app/app.js
