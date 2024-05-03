@@ -17,17 +17,21 @@ from nltk.corpus import wordnet as wn
 nltk.download('wordnet')
 nltk.download('words')
 
+# Get the absolute path to the directory of this script
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+# Construct the absolute path to classifier.pkl
 # Load the model and vectorizer
-with open('classifier.pkl', 'rb') as f:
+with open(os.path.join(dir_path, 'classifier.pkl'), 'rb') as f:
     model = pickle.load(f)
 
-with open('vectorizer.pkl', 'rb') as f:
+with open(os.path.join(dir_path, 'vectorizer.pkl'), 'rb') as f:
     vectorizer = pickle.load(f)
 
-with open('unique_scam_words.pkl', 'rb') as f:
+with open(os.path.join(dir_path, 'unique_scam_words.pkl'), 'rb') as f:
     unique_scam_words = pickle.load(f)
     
-with open('irregular_verbs.pkl', 'rb') as f:
+with open(os.path.join(dir_path, 'irregular_verbs.pkl'), 'rb') as f:
     irregular_verbs = pickle.load(f)
 
 
