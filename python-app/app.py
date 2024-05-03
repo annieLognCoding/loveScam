@@ -169,6 +169,7 @@ CORS(app)
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    print("I GOT HERE")
     try:
         danger = []
         pred_model = 0

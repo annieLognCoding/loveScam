@@ -256,7 +256,7 @@ app.post('/get-prediction', async (req, res) => {
     try {
         const all_text = req.body;
         const messages = all_text.data.messages;
-
+        console.log(`${apiUrl}/predict`)
         const response = await fetch(`${apiUrl}/predict`, {
             method: 'POST',
             headers: {
