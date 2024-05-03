@@ -14,7 +14,7 @@ let messages = []
 
 
 // Serve static files from the public directory
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 
 app.set('view engine', 'ejs'); //when rendering html, express app will look for ejs files 
@@ -71,12 +71,12 @@ function getAlign(locs, imageWidth, imageCenter, imageHeight) {
             const textCenter = (x1 - x0) / 2
             textCenters.push(textCenter)
         }
-        const n = textCenters.length        
+        const n = textCenters.length
         const mean = textCenters.reduce((a, b) => a + b) / n
         const std = Math.sqrt(textCenters.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
         const threshold = getDynamicThreshold(imageWidth, imageHeight);
         return std > threshold ? "Multiple Senders" : "Single Sender";
-    }else if(locs.length == 1){
+    } else if (locs.length == 1) {
         return "Single Sender"
     }
 }
