@@ -2,27 +2,39 @@ function updateUI(data) {
     const {result, danger} = data
     const percentage = Math.floor(result[1] * 100);
     var ctx = document.getElementById('myChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Scam', 'Safe'],
-                datasets: [{
-                    label: 'Scam Analysis',
-                    data: [percentage, 100 - percentage], // Your data array [scam%, safe%]
-                    backgroundColor: ['red', 'green'],
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                cutout: '50%', // Adjust for desired donut thickness
-            }
-        });
-    wordsList.innerHTML = ''; // Clear previous entries
-    danger.forEach(word => {
-      let li = document.createElement('li');
-      li.textContent = word;
-      wordsList.appendChild(li);
+    var resultArea = document.getElementById('realResult');
+
+    var myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Scam', 'Safe'],
+            datasets: [{
+                label: 'Scam Analysis',
+                data: [percentage, 100 - percentage], // Your data array [scam%, safe%]
+                backgroundColor: ['#d72c0d', '#00b844'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '50%', // Adjust for desired donut thickness
+        }
     });
+    
+    if(percentage > 50){
+        var wordsList = document.createElement('ul');
+        wordsList.innerHTML = ''; // Clear previous entries
+        danger.forEach(word => {
+            let li = document.createElement('p');
+            li.textContent = word;
+            li.style.color = "red";
+            wordsList.appendChild(li);
+        });
+        var susTitle = document.createElement('h1');
+        susTitle.innerText = 'Suspicious Words'
+        resultArea.appendChild(susTitle);
+        resultArea.appendChild(wordsList);
+    }
+    
 }
 
 function uploadFile() {

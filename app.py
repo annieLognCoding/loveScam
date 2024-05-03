@@ -214,7 +214,7 @@ def predict():
         
         private_info = is_asking_for_private_info(received_text)
         if(len(private_info) > 0):
-            score += (sum([len(info_word) for info_word in private_info]) / 5) * 0.1 * len(received_text)
+            score += (sum([len(info_word) for info_word in private_info]) / 5) * 0.2 * len(received_text)
             if(pred_model): score += 0.7 * len(received_text)
             danger.extend(private_info)
 
