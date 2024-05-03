@@ -7,7 +7,7 @@ const Jimp = require('jimp');
 const app = express();
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const apiUrl = process.env.NODE_ENV === 'production' ? 'https://still-depths-53199-9399d44fc361.herokuapp.com/' : 'http://localhost:5001';// Body parsing middleware
+const apiUrl = process.env.NODE_ENV === 'production' ? 'https://still-depths-53199-9399d44fc361.herokuapp.com' : 'http://localhost:5001';// Body parsing middleware
 
 let messages = []
 
@@ -254,9 +254,9 @@ app.post('/process-changes', (req, res) => {
 
 app.post('/get-prediction', async (req, res) => {
     try {
+        console.log(`${apiUrl}/predict`)
         const all_text = req.body;
         const messages = all_text.data.messages;
-        console.log(`${apiUrl}/predict`)
         const response = await fetch(`${apiUrl}/predict`, {
             method: 'POST',
             headers: {
