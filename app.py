@@ -137,24 +137,28 @@ def find_suspicious_links(text):
 def is_asking_for_private_info(text):
     sus = []
     # Possessive pronouns that might indicate a request for private information
-    possessives = ["your", "ur"]
+    possessives = ["your", "ur", "my"]
     
     # Data terms associated with private information
     private_data_terms = [
-        "name", "number", "email", "address",
+        "name", "number", "phone number", "email", "address",
         "social security number", "ssn", "credit card", 
         "bank account", "instagram", "insta", "kakao talk", 
         "katalk", "kakaotalk", "snapchat", "account", "password", "pw"
     ]
 
     # Generate patterns dynamically
-    patterns = [rf"\b{pronoun} {data_term}\b" for pronoun in possessives for data_term in private_data_terms]
+    patterns = [
+        r"\b{}\b(?:\s+\w+'s)?(?:\s+\w+){{0,1}}\s*{}\b[.,!?;:]*".format(pronoun, data_term)
+        for pronoun in possessives for data_term in private_data_terms
+    ]
 
     text = text.lower()
     # Check if any of the patterns are found in the text
-    for pattern in patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            sus.append(pattern[2:-2])
+    for i in range(len(patterns)):
+        pattern = patterns[i]
+        if re.search(pattern, text):
+            sus.append(possessives[i//len(private_data_terms)] + " " + private_data_terms[i%len(private_data_terms)])
     return sus
 
 
@@ -218,14 +222,12 @@ def predict():
         
         urgency_words = evaluate_urgency(received_text)
         if(len(urgency_words) > 0):
-            print(urgency_words, pred_model)
             score += (sum([len(urgency_word) for urgency_word in urgency_words]) // 5 + 1) * (len(received_text) * 0.1)
-            print(sum([len(urgency_word) for urgency_word in urgency_words]), len(received_text))
             if(pred_model): score += 0.7 * len(received_text)
             danger.extend(urgency_words)
         
         blob = TextBlob(received_text)
-        print(score)
+        print(danger)
             
         score = score / len(received_text)
         if(score >= 1): score = 0.98

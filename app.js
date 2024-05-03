@@ -65,7 +65,7 @@ function getDynamicThreshold(imageWidth, imageHeight) {
 
 function getAlign(locs, imageWidth, imageCenter, imageHeight) {
     let textCenters = []
-    if (locs.length > 0) {
+    if (locs.length > 1) {
         for (let i = 1; i < locs.length; i++) {
             loc = locs[i]
             prevLoc = locs[i - 1]
@@ -73,14 +73,14 @@ function getAlign(locs, imageWidth, imageCenter, imageHeight) {
             const textCenter = (x1 - x0) / 2
             textCenters.push(textCenter)
         }
+        const n = textCenters.length        
+        const mean = textCenters.reduce((a, b) => a + b) / n
+        const std = Math.sqrt(textCenters.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+        const threshold = getDynamicThreshold(imageWidth, imageHeight);
+        return std > threshold ? "Multiple Senders" : "Single Sender";
+    }else if(locs.length == 1){
+        return "Single Sender"
     }
-
-    const n = textCenters.length
-    const mean = textCenters.reduce((a, b) => a + b) / n
-    const std = Math.sqrt(textCenters.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
-    const threshold = getDynamicThreshold(imageWidth, imageHeight);
-    return std > threshold ? "Multiple Senders" : "Single Sender";
-
 }
 
 function getVerticalThreshold(textHeight, imageHeight) {
@@ -187,7 +187,9 @@ app.post('/upload', upload.single('image'), async (req, res) => {
             const imageCenter = imageWidth / 2;
             await worker.recognize(processedImage, 'eng')
                 .then(({ data: { lines } }) => {
+
                     locs = lines.map(line => {
+                        console.log("here", line.text);
                         return {
                             x0: line.bbox.x0,
                             x1: line.bbox.x1,
@@ -269,7 +271,7 @@ app.post('/get-prediction', async (req, res) => {
         if (response.ok) {
             const data = await response.json();
             req.session.data = { data };
-            res.json({ redirect: "/result" });// Send response to the client
+            res.json({ data });// Send response to the client
         } else {
             console.error('Failed to fetch:', response.statusText);
             res.status(response.status).send({ error: 'Failed to fetch from Flask API' }); // Send error response to the client
@@ -284,7 +286,7 @@ app.post('/get-prediction', async (req, res) => {
 app.get("/result", (req, res) => {
     data = req.session.data.data;
     const { danger, result } = data
-    res.render('index', { danger, result, data: null });
+    res.json({ danger, result, data: null })
 })
 
 app.listen(port, () => {

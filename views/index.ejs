@@ -58,21 +58,17 @@
 
             </div>
             <div class="col">
-                <h1>Message Analysis Results</h1>
-                <% if(result && result[1]> 0.5){ %>
-                    <p class="scam">Scam Probability: <%= (result[1] * 100).toFixed(2) %> %</p>
-                    <div class="mt-4">
-                        <h2>Danger Words:</h2>
-                        <% for (let word of danger) { %>
-                            <p class="danger-words">
-                                <%= word %>
-                            </p>
-                            <% } %>
-                    </div>
-                    <%}else if (result){%>
-                        <h2>Likely not a scam!</h2>
-                        <p class="safe">Scam Probaility: <%= (result[1] * 100).toFixed(2) %> %</p>
-                        <%}%>
+                <div id="resultArea">
+                    <!-- <h1>Result: <span id="status">Loading...</span></h1> -->
+                    <div id="progressContainer" style="width: 100%; background-color: #ddd;">
+                        <div id="progressBar" style="width: 0%; height: 30px; background-color: #4CAF50;"></div>
+                      </div>
+                    <p>Match Percentage: <span id="percentage">0</span>%</p>
+                    <% if(result && result[1]> 0.5){ %>
+                    <h2>Sensitive Words:</h2>
+                    <ul id="wordsList"></ul>
+                    <% } %>
+                  </div>
             </div>
         </div>
 

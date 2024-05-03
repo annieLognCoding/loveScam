@@ -1,3 +1,17 @@
+function updateUI(data) {
+    const {result, danger} = data
+    const percentage = result[1] * 100;
+    document.getElementById('progressBar').style.width = percentage + '%';
+    document.getElementById('percentage').textContent = percentage;
+    const wordsList = document.getElementById('wordsList');
+    wordsList.innerHTML = ''; // Clear previous entries
+    danger.forEach(word => {
+      let li = document.createElement('li');
+      li.textContent = word;
+      wordsList.appendChild(li);
+    });
+}
+
 function uploadFile() {
     const input = document.getElementById('fileInput');
     const data = new FormData();
@@ -19,14 +33,18 @@ function uploadFile() {
                     body: JSON.stringify(data)
                 })
                     .then(response => {
-                        if (response.ok) return response.text();
-                        throw new Error('Something went wrong');
+                        fetch('/results')
+                            .then(response => response.json())
+                            .then(data => updateUI(data))
+                            .catch(error => console.error('Error fetching data:', error));
                     })
                     .then(html => document.write(html))
                     .catch(error => console.error('Error:', error));
             });
     }
 }
+
+
 
 
 // Function to handle click on confirm buttons
