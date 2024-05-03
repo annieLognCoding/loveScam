@@ -59,11 +59,12 @@
             </div>
             <div class="col">
                 <div id="resultArea">
-                    <!-- <h1>Result: <span id="status">Loading...</span></h1> -->
+                    <!-- <h1>Result</h1>
                     <div id="progressContainer" style="width: 100%; background-color: #ddd;">
                         <div id="progressBar" style="width: 0%; height: 30px; background-color: #4CAF50;"></div>
-                      </div>
-                    <p>Match Percentage: <span id="percentage">0</span>%</p>
+                      </div> -->
+                      <h2>Scam Analysis</h2>
+                      <canvas id="myChart"></canvas>
                     <% if(result && result[1]> 0.5){ %>
                     <h2>Sensitive Words:</h2>
                     <ul id="wordsList"></ul>
@@ -74,6 +75,7 @@
 
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

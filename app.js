@@ -283,8 +283,9 @@ app.post('/get-prediction', async (req, res) => {
 });
 
 
-app.get("/result", (req, res) => {
-    data = req.session.data.data;
+app.post("/result", (req, res) => {
+    console.log(req.body)
+    data = req.body.predictionData.data;
     const { danger, result } = data
     res.json({ danger, result, data: null })
 })

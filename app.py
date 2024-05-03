@@ -217,14 +217,11 @@ def predict():
             score += (sum([len(info_word) for info_word in private_info]) / 5) * 0.1 * len(received_text)
             if(pred_model): score += 0.7 * len(received_text)
             danger.extend(private_info)
-        print(score)
-        print(score)
+
         urgency_words = evaluate_urgency(received_text)
         if(len(urgency_words) > 0):
             score += (sum([len(urgency_word) for urgency_word in urgency_words]) // 5 + 1) * (len(received_text) * 0.1)
             if(pred_model): score += 0.7 * len(received_text)
-            print(score/ len(received_text))
-            print(score/ len(received_text))
             danger.extend(urgency_words)
         
         blob = TextBlob(received_text)

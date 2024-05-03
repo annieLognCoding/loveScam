@@ -1,9 +1,22 @@
 function updateUI(data) {
     const {result, danger} = data
-    const percentage = result[1] * 100;
-    document.getElementById('progressBar').style.width = percentage + '%';
-    document.getElementById('percentage').textContent = percentage;
-    const wordsList = document.getElementById('wordsList');
+    const percentage = Math.floor(result[1] * 100);
+    var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Scam', 'Safe'],
+                datasets: [{
+                    label: 'Scam Analysis',
+                    data: [percentage, 100 - percentage], // Your data array [scam%, safe%]
+                    backgroundColor: ['red', 'green'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '50%', // Adjust for desired donut thickness
+            }
+        });
     wordsList.innerHTML = ''; // Clear previous entries
     danger.forEach(word => {
       let li = document.createElement('li');
@@ -33,10 +46,8 @@ function uploadFile() {
                     body: JSON.stringify(data)
                 })
                     .then(response => {
-                        fetch('/results')
-                            .then(response => response.json())
-                            .then(data => updateUI(data))
-                            .catch(error => console.error('Error fetching data:', error));
+                        if (response.ok) return response.text();
+                        throw new Error('Something went wrong');
                     })
                     .then(html => document.write(html))
                     .catch(error => console.error('Error:', error));
@@ -141,11 +152,15 @@ function submitChange() {
                 body: JSON.stringify({ data })
             }).then(response => response.json())
                 .then(predictionData => {
-                    if (predictionData.redirect) {
-                        window.location.href = predictionData.redirect; // Perform the redirection
-                    } else {
-                        console.log('Prediction:', predictionData);
-                    }
+                    fetch('/result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ predictionData })
+
+                    })
+                        .then(response => response.json())
+                        .then(data => updateUI(data))
+                        .catch(error => console.error('Error fetching data:', error));
                 })
                 .catch(error => {
                     console.error('Error in network or parsing:', error);
