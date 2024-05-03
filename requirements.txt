@@ -5,3 +5,4 @@ numpy==1.26.4
 Flask-CORS==3.0.10
 textblob==0.17.1
 pickle-mixin==1.0.2
+Werkzeug==2.0.2
