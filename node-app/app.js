@@ -7,7 +7,7 @@ const Jimp = require('jimp');
 const app = express();
 const session = require('express-session');
 const bodyParser = require('body-parser');
-
+const apiUrl = process.env.API_URL;
 // Body parsing middleware
 
 let messages = []
@@ -258,7 +258,7 @@ app.post('/get-prediction', async (req, res) => {
         const all_text = req.body;
         const messages = all_text.data.messages;
 
-        const response = await fetch('http://localhost:5001/predict', {
+        const response = await fetch(`${apiUrl}/predict`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
