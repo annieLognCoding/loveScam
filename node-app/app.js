@@ -10,8 +10,6 @@ const bodyParser = require('body-parser');
 
 // Body parsing middleware
 
-const port = 3000;
-
 let messages = []
 
 
@@ -290,6 +288,7 @@ app.post("/result", (req, res) => {
     res.json({ danger, result, data: null })
 })
 
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });

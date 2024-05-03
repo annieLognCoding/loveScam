@@ -239,4 +239,9 @@ def predict():
     return jsonify({"result": result, "danger": danger})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # Get port and debug mode from environment variables with defaults
+    port = int(os.environ.get('PORT', 5001))
+    debug_mode = os.environ.get('DEBUG', 'False') == 'True'  # Ensure the string 'True' is converted to boolean True
+
+    # Run the application
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
