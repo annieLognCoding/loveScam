@@ -1,5 +1,5 @@
 function updateUI(data) {
-    const {result, danger} = data
+    const { result, danger } = data
     const percentage = Math.floor(result[1] * 100);
     var ctx = document.getElementById('myChart').getContext('2d');
     var resultArea = document.getElementById('realResult');
@@ -19,8 +19,8 @@ function updateUI(data) {
             cutout: '50%', // Adjust for desired donut thickness
         }
     });
-    
-    if(percentage > 50){
+
+    if (percentage > 50) {
         var wordsList = document.createElement('ul');
         wordsList.innerHTML = ''; // Clear previous entries
         danger.forEach(word => {
@@ -34,7 +34,7 @@ function updateUI(data) {
         resultArea.appendChild(susTitle);
         resultArea.appendChild(wordsList);
     }
-    
+
 }
 
 function uploadFile() {
@@ -162,13 +162,14 @@ function submitChange() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data })
-            }).then(response => response.json())
+            })
+                .then(predictionResponse => predictionResponse.json())
                 .then(predictionData => {
+                    console.log('Prediction:', predictionData);
                     fetch('/result', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ predictionData })
-
                     })
                         .then(response => response.json())
                         .then(data => updateUI(data))
@@ -177,10 +178,6 @@ function submitChange() {
                 .catch(error => {
                     console.error('Error in network or parsing:', error);
                 });
-        })
-        .then(response => response.json())
-        .then(predictionData => {
-            console.log('Prediction:', predictionData);
         })
         .catch(error => {
             console.error('Error in network or parsing:', error);
