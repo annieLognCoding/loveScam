@@ -3,6 +3,17 @@ function updateUI(data) {
     const percentage = Math.floor(result[1] * 100);
     var ctx = document.getElementById('myChart').getContext('2d');
     var resultArea = document.getElementById('realResult');
+    
+    document.querySelectorAll('.confirm-button').forEach(button => {
+        const messageBox = button.closest('.message-box');
+        const textarea = messageBox.querySelector('.message-text');
+        textarea.disabled = true;
+        button.classList.remove('d-inline');        
+        button.style.display = "none";
+            
+    });
+
+
 
     var myChart = new Chart(ctx, {
         type: 'doughnut',
@@ -184,15 +195,46 @@ function submitChange() {
         });
 }
 
+const adjustHeight = (textarea) => {
+    textarea.style.height = 'auto';  // Reset the height
+    textarea.style.height = textarea.scrollHeight + 'px';  // Set height based on scroll height
+};
 
+
+function toggleButtons(button) {
+    const messageBox = button.closest('.message-box');
+    const textarea = messageBox.querySelector('.message-text');
+    const type = button.getAttribute('data-type');
+    console.log(type)
+
+    switch (type) {
+        case 'C':  // Center button pressed, hide the textarea
+            messageBox.style.display = 'none';
+            break;
+        case 'L':  // Received button pressed, turn the box black
+            textarea.style.display = 'block';  // Ensure it's visible if previously hidden
+            messageBox.classList.remove('text-left', 'text-right', 'text-center');
+            messageBox.classList.add('text-left');
+            messageBox.style.backgroundColor = 'rgb(16, 15, 15)';
+            adjustHeight(textarea);
+            textarea.style.backgroundColor = 'rgb(16, 15, 15)';  // Ensuring text is visible on black background
+            textarea.style.color = 'white';  // Ensuring text is visible on black background
+            break;
+        case 'R':  // Sent button pressed, turn the box blue
+            textarea.style.display = 'block';  // Ensure it's visible if previously hidden
+            messageBox.classList.remove('text-left', 'text-right', 'text-center');
+            messageBox.classList.add('text-right');
+            messageBox.style.backgroundColor = 'rgb(0, 149, 255)';
+            adjustHeight(textarea);
+            textarea.style.backgroundColor = 'rgb(0, 149, 255)';
+            textarea.style.color = 'white';  // Ensuring text is visible on blue background
+            break;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     const textareas = document.querySelectorAll('.message-text');
 
-    const adjustHeight = (textarea) => {
-        textarea.style.height = 'auto';  // Reset the height
-        textarea.style.height = textarea.scrollHeight + 'px';  // Set height based on scroll height
-    };
 
     textareas.forEach(textarea => {
         adjustHeight(textarea);  // Adjust height initially
@@ -205,35 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelectorAll('.confirm-button').forEach(button => {
-        button.addEventListener('click', function () {
-            const messageBox = this.closest('.message-box');
-            const textarea = messageBox.querySelector('.message-text');
-            const type = this.getAttribute('data-type');
-
-            switch (type) {
-                case 'C':  // Center button pressed, hide the textarea
-                    messageBox.style.display = 'none';
-                    break;
-                case 'L':  // Received button pressed, turn the box black
-                    textarea.style.display = 'block';  // Ensure it's visible if previously hidden
-                    messageBox.classList.remove('text-left', 'text-right', 'text-center');
-                    messageBox.classList.add('text-left');
-                    messageBox.style.backgroundColor = 'rgb(16, 15, 15)';
-                    adjustHeight(textarea);
-                    textarea.style.backgroundColor = 'rgb(16, 15, 15)';  // Ensuring text is visible on black background
-                    textarea.style.color = 'white';  // Ensuring text is visible on black background
-                    break;
-                case 'R':  // Sent button pressed, turn the box blue
-                    textarea.style.display = 'block';  // Ensure it's visible if previously hidden
-                    messageBox.classList.remove('text-left', 'text-right', 'text-center');
-                    messageBox.classList.add('text-right');
-                    messageBox.style.backgroundColor = 'rgb(0, 149, 255)';
-                    adjustHeight(textarea);
-                    textarea.style.backgroundColor = 'rgb(0, 149, 255)';
-                    textarea.style.color = 'white';  // Ensuring text is visible on blue background
-                    break;
-            }
-        });
+        button.addEventListener('click', () => toggleButtons(button));
     });
 
 

@@ -23,7 +23,7 @@
                         <% data.show_text.forEach(function(text, index) { %>
                             <div class="message-box <%= text[0] === 'C' ? 'text-center' : text[0] === 'L' ? 'text-left black-bg' : 'text-right blue-bg' %>"
                                 data-index="<%= index %>">
-                                <textarea class="form-control message-text"><%= text[1] %></textarea>
+                                <textarea class="form-control message-text"><%= text[1].trim() %></textarea>
                                 <button class="btn btn-secondary btn-sm confirm-button d-inline"
                                     data-type="R">Sent</button>
                                 <button class="btn btn-secondary btn-sm confirm-button d-inline"
