@@ -34,19 +34,29 @@ upload.single('image') is a middleware provided by Multer that handles the file 
 */
 const upload = multer({ storage: storage });
 
-// GreyScale Image
-async function preprocessImage(imageBuffer) {
+async function preprocessImage(imageBuffer, width, height) {
     const image = await Jimp.read(imageBuffer);
 
-    image
-        .grayscale() // convert to grayscale
-        .contrast(1) // increase the contrast
-        .quality(100); // set JPEG quality
+    // Example criteria: resize if the height is less than 800 pixels
+    if (height < 800) {
+        await image.resize(Jimp.AUTO, 1200);  // Resize the image to a height of 1200 pixels while maintaining aspect ratio
+    }
 
-    // Return the preprocessed image buffer
+    // Apply other preprocessing steps
+    image.grayscale()
+         .contrast(1)  // Increase the contrast to enhance text legibility
+         .quality(100);  // Set the image quality to 100 (for formats that support this parameter)
+
+    // After preprocessing, get the new dimensions
+    const newWidth = image.bitmap.width;
+    const newHeight = image.bitmap.height;
+
+    // Return the processed image buffer and the new dimensions
     const preprocessedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-    return preprocessedBuffer;
+    return { preprocessedBuffer, newWidth, newHeight };
 }
+
+
 
 function getDynamicThreshold(imageWidth, imageHeight) {
     // Base scale factor; this might need tuning based on empirical data
@@ -177,12 +187,14 @@ app.post('/upload', upload.single('image'), async (req, res) => {
         try {
 
             const imgBuffer = req.file.buffer;
-            const metadata = await sharp(imgBuffer).metadata()
-            const imageWidth = metadata.width
-            const imageHeight = metadata.height
-            const processedImage = await preprocessImage(imgBuffer)
-            const imageCenter = imageWidth / 2;
-            await worker.recognize(processedImage, 'eng')
+            const metadata = await sharp(imgBuffer).metadata();
+            const imageWidth = metadata.width;
+            const imageHeight = metadata.height;
+            
+            // Process the image and get the new dimensions
+            const { preprocessedBuffer, newWidth, newHeight } = await preprocessImage(imgBuffer, imageWidth, imageHeight);
+            const imageCenter = newWidth / 2;
+            await worker.recognize(preprocessedBuffer, 'eng')
                 .then(({ data: { lines } }) => {
 
                     locs = lines.map(line => {
@@ -195,9 +207,9 @@ app.post('/upload', upload.single('image'), async (req, res) => {
                             text: line.text
                         }
                     })
-                    const figure = getAlign(locs, imageWidth, imageCenter, imageHeight);
-                    const textBlocks = analyzeTextBlocks(locs, imageHeight);
-                    messages = getMessageBlocks(textBlocks, figure, imageWidth);
+                    const figure = getAlign(locs, newWidth, imageCenter, newHeight);
+                    const textBlocks = analyzeTextBlocks(locs, newHeight);
+                    messages = getMessageBlocks(textBlocks, figure, newWidth);
                     res.redirect('./show');
                 })
                 .finally(async () => {
